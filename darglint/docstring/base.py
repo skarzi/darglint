@@ -10,6 +10,8 @@ from typing import (
     Iterable,
 )
 
+from ..enums import Strictness
+
 
 class DocstringStyle(enum.Enum):
     GOOGLE = 0
@@ -55,6 +57,8 @@ class BaseDocstring(ABC):
     consistent as possible.
 
     """
+
+    _supported_sections = tuple(Sections)  # type: Tuple[Sections, ...]
 
     @abstractmethod
     def get_section(self, section):
@@ -158,10 +162,8 @@ class BaseDocstring(ABC):
         # type: () -> bool
         pass
 
-    @abstractmethod
     def satisfies_strictness(self, strictness):
-        # NOTE: We can't add the type signature because adding Strictness
-        # to the imports would cause a circular dependency.
+        # type: (Strictness) -> bool
         """Return true if the docstring has no more than the min strictness.
 
         Args:
@@ -172,4 +174,19 @@ class BaseDocstring(ABC):
             True if there is no more than the minimum amount of strictness.
 
         """
-        pass
+        sections = {
+            section for section in self._supported_sections
+            if self.get_section(section)
+        }
+        if strictness == Strictness.SHORT_DESCRIPTION:
+            return sections == {Sections.SHORT_DESCRIPTION}
+        elif strictness == Strictness.LONG_DESCRIPTION:
+            return sections in [
+                {Sections.SHORT_DESCRIPTION},
+                # Shouldn't be possible, but if it is in the future, then
+                # we should allow this.
+                {Sections.LONG_DESCRIPTION},
+                {Sections.SHORT_DESCRIPTION, Sections.LONG_DESCRIPTION},
+            ]
+        else:
+            return False

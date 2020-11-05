@@ -34,9 +34,6 @@ from ..lex import (
 from ..errors import (
     DarglintError,
 )
-from ..config import (
-    Strictness,
-)
 from ..parse.identifiers import (
     ArgumentIdentifier,
     ArgumentItemIdentifier,
@@ -410,32 +407,3 @@ class Docstring(BaseDocstring):
         """
         noqas = self.get_noqas()
         return '*' in noqas
-
-    def satisfies_strictness(self, strictness):
-        # type: (Strictness) -> bool
-        """Return true if the docstring has no more than the min strictness.
-
-        Args:
-            strictness: The minimum amount of strictness which should
-                be present in the docstring.
-
-        Returns:
-            True if there is no more than the minimum amount of strictness.
-
-        """
-        sections = {
-            section for section in self._supported_sections
-            if self.get_section(section)
-        }
-        if strictness == Strictness.SHORT_DESCRIPTION:
-            return sections == {Sections.SHORT_DESCRIPTION}
-        elif strictness == Strictness.LONG_DESCRIPTION:
-            return sections in [
-                {Sections.SHORT_DESCRIPTION},
-                # Shouldn't be possible, but if it is in the future, then
-                # we should allow this.
-                {Sections.LONG_DESCRIPTION},
-                {Sections.SHORT_DESCRIPTION, Sections.LONG_DESCRIPTION},
-            ]
-        else:
-            return False
